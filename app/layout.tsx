@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppShell } from "@/components/AppShell";
+import { PwaRegister } from "@/components/PwaRegister";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,9 +14,33 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const appDescription =
+  "Mobile-first hypertrophy workout planner and progress tracker";
+
 export const metadata: Metadata = {
+  applicationName: "Setwise",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Setwise",
+  },
+  description: appDescription,
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    apple: [{ sizes: "180x180", type: "image/png", url: "/apple-icon.png" }],
+    icon: [{ sizes: "512x512", type: "image/png", url: "/icon.png" }],
+  },
+  manifest: "/manifest.webmanifest",
   title: "Setwise",
-  description: "A calm hypertrophy workout planner and progress tracker.",
+};
+
+export const viewport: Viewport = {
+  initialScale: 1,
+  themeColor: "#173b32",
+  viewportFit: "cover",
+  width: "device-width",
 };
 
 export default function RootLayout({
@@ -29,6 +54,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
+        <PwaRegister />
         <AppShell>{children}</AppShell>
       </body>
     </html>

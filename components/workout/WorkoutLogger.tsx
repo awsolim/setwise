@@ -54,21 +54,6 @@ export function WorkoutLogger({ dayId }: WorkoutLoggerProps) {
     setError(null);
   }
 
-  function fillDummyData() {
-    setExerciseLogs(
-      activeLogs.map((log, exerciseIndex) => ({
-        ...log,
-        sets: log.sets.map((set) => ({
-          ...set,
-          completed: true,
-          reps: Math.max(6, 12 - set.setNumber - exerciseIndex),
-          weight: set.weight > 0 ? set.weight : 50 + exerciseIndex * 15,
-        })),
-      })),
-    );
-    setError(null);
-  }
-
   function finishWorkout() {
     if (!workoutDay) {
       return;
@@ -145,13 +130,6 @@ export function WorkoutLogger({ dayId }: WorkoutLoggerProps) {
         <p className="mt-3 text-sm font-semibold text-white/78">
           {workoutExercises.length} exercises
         </p>
-        <button
-          className="mt-4 min-h-10 rounded-2xl bg-white/14 px-4 text-sm font-semibold text-white"
-          onClick={fillDummyData}
-          type="button"
-        >
-          Fill dummy data
-        </button>
       </section>
 
       {workoutExercises.map((exercise) => {
