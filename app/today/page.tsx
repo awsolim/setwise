@@ -1,21 +1,22 @@
-import { Card } from "@/components/Card";
-import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
+import { TodayWorkout } from "@/components/today/TodayWorkout";
+import { getCurrentDateLabel, getTodayWeekday } from "@/lib/workout-utils";
+
+export const dynamic = "force-dynamic";
 
 export default function TodayPage() {
+  const now = new Date();
+  const today = getTodayWeekday(now);
+  const dateLabel = getCurrentDateLabel(now);
+
   return (
     <>
       <PageHeader
         title="Today"
-        description="A focused place for starting today's workout will live here soon."
+        description="Your saved plan for the day, with a quick weekly preview."
       />
 
-      <Card>
-        <EmptyState
-          title="No workout queued yet"
-          description="Later, Setwise will surface your next session and the lifts that need attention."
-        />
-      </Card>
+      <TodayWorkout dateLabel={dateLabel} today={today} />
     </>
   );
 }

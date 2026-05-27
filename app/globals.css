@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f4ef;
+  --background: #eeebe3;
   --foreground: #1e211d;
   --surface: #fffdf8;
-  --surface-muted: #ece8df;
-  --border: #ded8cb;
+  --surface-muted: #e7e2d7;
+  --border: #d6cfc0;
   --accent: #3d6f5a;
   --accent-soft: #e4eee8;
   --muted: #6f746c;
@@ -37,4 +37,18 @@ body {
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.dark-action {
+  color: #ffffff !important;
+}
+
+.dark-action *,
+.dark-action:visited {
+  color: #ffffff !important;
 }

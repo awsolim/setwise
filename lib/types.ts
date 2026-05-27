@@ -1,0 +1,45 @@
+export type Weekday =
+  | "Monday"
+  | "Tuesday"
+  | "Wednesday"
+  | "Thursday"
+  | "Friday"
+  | "Saturday"
+  | "Sunday";
+
+export type WorkoutDay = {
+  id: string;
+  dayOfWeek: Weekday;
+  title: string;
+  notes?: string;
+  exerciseIds: string[];
+};
+
+export type Exercise = {
+  id: string;
+  name: string;
+  muscleGroup?: string;
+  sets: number;
+  repMin: number;
+  repMax: number;
+  notes?: string;
+};
+
+export type WorkoutSession = {
+  id: string;
+  workoutDayId: string;
+  date: string;
+  exerciseLogs: ExerciseLog[];
+};
+
+export type ExerciseLog = {
+  exerciseId: string;
+  sets: LoggedSet[];
+};
+
+export type LoggedSet = {
+  setNumber: number;
+  weight: number;
+  reps: number;
+  completed: boolean;
+};

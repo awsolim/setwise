@@ -1,21 +1,20 @@
-import { Card } from "@/components/Card";
-import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
+import { PlanOverview } from "@/components/plan/PlanOverview";
+import { getTodayWeekday } from "@/lib/workout-utils";
+
+export const dynamic = "force-dynamic";
 
 export default function PlanPage() {
+  const today = getTodayWeekday();
+
   return (
     <>
       <PageHeader
         title="Plan"
-        description="Build and review your weekly split here in a later phase."
+        description="Review and edit the weekly split saved on this device."
       />
 
-      <Card>
-        <EmptyState
-          title="Weekly split coming soon"
-          description="This space will become the home for training days, muscle groups, and exercise structure."
-        />
-      </Card>
+      <PlanOverview today={today} />
     </>
   );
 }
