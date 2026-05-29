@@ -207,6 +207,12 @@ export function WorkoutDayEditor({ dayId }: WorkoutDayEditorProps) {
           title="Day not found"
           description="This workout day is not part of the current weekly plan."
         />
+        <Link
+          className="mt-4 flex min-h-12 items-center justify-center rounded-2xl bg-surface-muted px-4 text-sm font-semibold text-foreground"
+          href="/plan"
+        >
+          Back to Plan
+        </Link>
       </Card>
     );
   }
@@ -214,7 +220,7 @@ export function WorkoutDayEditor({ dayId }: WorkoutDayEditorProps) {
   const isRest = workoutDay.exerciseIds.length === 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-8">
       <div className="flex items-center justify-between gap-3">
         <Link
           className="inline-flex min-h-9 items-center rounded-full px-1 text-sm font-semibold text-muted hover:text-foreground"
@@ -340,9 +346,10 @@ export function WorkoutDayEditor({ dayId }: WorkoutDayEditorProps) {
       ) : null}
 
       <button
-        className="min-h-14 w-full rounded-2xl bg-accent px-5 text-base font-semibold text-white disabled:opacity-50"
+        className="dark-action min-h-14 w-full rounded-2xl bg-accent px-5 text-base font-semibold disabled:bg-surface-muted disabled:!text-muted"
         disabled={status !== "dirty"}
         onClick={handleSave}
+        style={status === "dirty" ? { color: "#ffffff" } : undefined}
         type="button"
       >
         Save Plan

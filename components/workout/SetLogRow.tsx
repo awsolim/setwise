@@ -8,6 +8,7 @@ type SetLogRowProps = {
     weight?: number;
   };
   set: LoggedSet;
+  unit: string;
   onChange: (set: LoggedSet) => void;
 };
 
@@ -20,7 +21,12 @@ function parseNumberInput(value: string): number {
   return Number.isFinite(parsedValue) ? Math.max(0, parsedValue) : 0;
 }
 
-export function SetLogRow({ placeholder, set, onChange }: SetLogRowProps) {
+export function SetLogRow({
+  placeholder,
+  set,
+  unit,
+  onChange,
+}: SetLogRowProps) {
   return (
     <div
       className={[
@@ -33,7 +39,7 @@ export function SetLogRow({ placeholder, set, onChange }: SetLogRowProps) {
       <p className="text-sm font-semibold text-muted">#{set.setNumber}</p>
       <label className="block">
         <span className="text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-muted">
-          Weight
+          Weight ({unit})
         </span>
         <input
           className="mt-1 min-h-11 w-full rounded-xl border border-border-soft bg-white px-3 text-base font-semibold text-foreground outline-none focus:border-accent"

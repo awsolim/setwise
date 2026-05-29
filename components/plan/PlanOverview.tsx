@@ -11,6 +11,12 @@ type PlanOverviewProps = {
 export function PlanOverview({ today }: PlanOverviewProps) {
   const { hasHydrated, plan, resetPlan } = useStoredPlan();
 
+  function handleResetPlan() {
+    if (window.confirm("Reset your weekly plan to the sample Setwise plan?")) {
+      resetPlan();
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4 border-b border-border-soft pb-4">
@@ -19,7 +25,7 @@ export function PlanOverview({ today }: PlanOverviewProps) {
         </p>
         <button
           className="min-h-10 shrink-0 rounded-full bg-surface px-4 text-sm font-semibold text-foreground"
-          onClick={resetPlan}
+          onClick={handleResetPlan}
           type="button"
         >
           Reset

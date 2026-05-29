@@ -1,17 +1,22 @@
+import Link from "next/link";
 import type { WorkoutDay } from "@/lib/types";
 import {
   formatLoggedSets,
+  formatSetPerformance,
   formatSessionDate,
   type ExerciseHistoryEntry as ExerciseHistoryEntryType,
 } from "@/lib/workout-utils";
+import type { WeightUnit } from "@/lib/types";
 
 type ExerciseHistoryEntryProps = {
   entry: ExerciseHistoryEntryType;
+  unit: WeightUnit;
   workoutDay?: WorkoutDay;
 };
 
 export function ExerciseHistoryEntry({
   entry,
+  unit,
   workoutDay,
 }: ExerciseHistoryEntryProps) {
   return (
@@ -25,6 +30,12 @@ export function ExerciseHistoryEntry({
             <p className="mt-1 text-sm text-muted">{workoutDay.title}</p>
           ) : null}
         </div>
+        <Link
+          className="rounded-full bg-surface-muted px-3 py-1 text-xs font-semibold text-foreground"
+          href={`/progress/session/${entry.session.id}`}
+        >
+          Edit
+        </Link>
       </div>
       <ul className="mt-3 space-y-2 border-t border-border-soft pt-3">
         {entry.log.sets
@@ -36,13 +47,21 @@ export function ExerciseHistoryEntry({
             >
               <span className="font-medium text-muted">Set {set.setNumber}</span>
               <span className="font-semibold text-foreground">
-                {set.weight} lb x {set.reps}
+                {formatSetPerformance(set, unit)}
               </span>
             </li>
           ))}
       </ul>
+      {entry.log.notes ? (
+        <p className="mt-3 text-sm leading-6 text-muted">{entry.log.notes}</p>
+      ) : null}
+      {entry.session.notes ? (
+        <p className="mt-2 rounded-2xl bg-surface-muted/55 px-3 py-2 text-sm leading-6 text-muted">
+          {entry.session.notes}
+        </p>
+      ) : null}
       <p className="mt-3 text-sm font-semibold text-muted">
-        {formatLoggedSets(entry.log)}
+        {formatLoggedSets(entry.log, unit)}
       </p>
     </article>
   );

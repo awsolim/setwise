@@ -7,7 +7,11 @@ import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
 import { ExerciseLogCard } from "@/components/workout/ExerciseLogCard";
 import { FinishWorkoutBar } from "@/components/workout/FinishWorkoutBar";
-import { useStoredPlan, useStoredWorkoutSessions } from "@/lib/storage";
+import {
+  useAppSettings,
+  useStoredPlan,
+  useStoredWorkoutSessions,
+} from "@/lib/storage";
 import type { ExerciseLog, WorkoutSession } from "@/lib/types";
 import {
   createInitialExerciseLogsForWorkout,
@@ -30,9 +34,11 @@ function createSessionId() {
 
 export function WorkoutLogger({ dayId }: WorkoutLoggerProps) {
   const router = useRouter();
+  const { settings } = useAppSettings();
   const { plan } = useStoredPlan();
   const { saveSession, sessions } = useStoredWorkoutSessions();
   const [error, setError] = useState<string | null>(null);
+  const [workoutNotes, setWorkoutNotes] = useState("");
   const workoutDay = plan.workoutDays.find((day) => day.id === dayId);
   const workoutExercises = workoutDay
     ? getExercisesForWorkout(workoutDay, plan.exercises)
@@ -63,6 +69,7 @@ export function WorkoutLogger({ dayId }: WorkoutLoggerProps) {
       date: date.toISOString(),
       exerciseLogs: activeLogs,
       id: createSessionId(),
+      notes: workoutNotes.trim() || undefined,
       workoutDayId: workoutDay.id,
     };
     const validationError = validateWorkoutSession(session);
@@ -83,6 +90,21 @@ export function WorkoutLogger({ dayId }: WorkoutLoggerProps) {
           title="Workout not found"
           description="This workout day is not part of the saved plan."
         />
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <Link
+            className="flex min-h-12 items-center justify-center rounded-2xl bg-surface-muted px-4 text-sm font-semibold text-foreground"
+            href="/today"
+          >
+            Today
+          </Link>
+          <Link
+            className="dark-action flex min-h-12 items-center justify-center rounded-2xl bg-accent px-4 text-sm font-semibold"
+            href="/plan"
+            style={{ color: "#ffffff" }}
+          >
+            Plan
+          </Link>
+        </div>
       </Card>
     );
   }
@@ -104,6 +126,7 @@ export function WorkoutLogger({ dayId }: WorkoutLoggerProps) {
           <Link
             className="dark-action flex min-h-12 items-center justify-center rounded-2xl bg-accent px-4 text-sm font-semibold"
             href="/plan"
+            style={{ color: "#ffffff" }}
           >
             Plan
           </Link>
@@ -146,9 +169,24 @@ export function WorkoutLogger({ dayId }: WorkoutLoggerProps) {
             log={log}
             onChange={updateLog}
             sessions={sessions}
+            unit={settings.weightUnit}
           />
         );
       })}
+
+      <section className="rounded-[1.35rem] border border-border-soft bg-surface/70 px-4 py-4">
+        <label className="block">
+          <span className="text-sm font-semibold text-foreground">
+            Workout note
+          </span>
+          <textarea
+            className="mt-2 min-h-24 w-full resize-none rounded-2xl border border-border-soft bg-white px-3 py-3 text-sm leading-6 text-foreground outline-none focus:border-accent"
+            onChange={(event) => setWorkoutNotes(event.target.value)}
+            placeholder="Energy, setup, aches, or anything useful for next time."
+            value={workoutNotes}
+          />
+        </label>
+      </section>
 
       <FinishWorkoutBar
         canFinish={hasAnyCompletedSet(activeLogs)}

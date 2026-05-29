@@ -5,6 +5,7 @@ import type {
   Weekday,
   WorkoutDay,
   WorkoutSession,
+  WeightUnit,
 } from "@/lib/types";
 
 export type ExerciseHistoryEntry = {
@@ -129,9 +130,10 @@ export function getExerciseHistory(
 export function getLatestPerformanceForExercise(
   exerciseId: string,
   sessions: WorkoutSession[],
+  unit: WeightUnit = "lb",
 ): string {
   const latestLog = getLatestLogForExercise(exerciseId, sessions);
-  return latestLog ? formatLoggedSets(latestLog) : "No sets logged";
+  return latestLog ? formatLoggedSets(latestLog, unit) : "No sets logged";
 }
 
 export function getLatestSessionDateForExercise(
@@ -165,6 +167,7 @@ export function createInitialExerciseLogsForWorkout(
 
     return {
       exerciseId: exercise.id,
+      notes: "",
       sets: Array.from({ length: exercise.sets }, (_, index) => ({
         completed: false,
         reps: 0,
@@ -237,11 +240,83 @@ export function getExercisesWithHistory(
   );
 }
 
+export function getWorkoutSessionById(
+  sessionId: string,
+  sessions: WorkoutSession[],
+): WorkoutSession | undefined {
+  return sessions.find((session) => session.id === sessionId);
+}
+
+export function getWorkoutsThisWeek(sessions: WorkoutSession[]): number {
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setHours(0, 0, 0, 0);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+
+  return sessions.filter((session) => {
+    const sessionDate = new Date(session.date);
+    return !Number.isNaN(sessionDate.getTime()) && sessionDate >= startOfWeek;
+  }).length;
+}
+
+export function getBestCompletedSet(logs: ExerciseLog[]): LoggedSet | null {
+  const completedSets = logs.flatMap((log) =>
+    log.sets.filter((set) => set.completed && set.reps > 0),
+  );
+
+  return (
+    completedSets.toSorted(
+      (a, b) => b.weight - a.weight || b.reps - a.reps,
+    )[0] ?? null
+  );
+}
+
+export function getSessionVolume(log: ExerciseLog): number {
+  return log.sets
+    .filter((set) => set.completed)
+    .reduce((total, set) => total + set.weight * set.reps, 0);
+}
+
+export function getExerciseTrendLabel(
+  exerciseId: string,
+  sessions: WorkoutSession[],
+): string {
+  const history = getExerciseHistory(exerciseId, sessions);
+  const latest = history[0];
+  const previous = history[1];
+
+  if (!latest || !previous) {
+    return "Needs another session";
+  }
+
+  const latestVolume = getSessionVolume(latest.log);
+  const previousVolume = getSessionVolume(previous.log);
+
+  if (latestVolume === previousVolume) {
+    return "Even with previous";
+  }
+
+  const delta = Math.abs(latestVolume - previousVolume);
+  return latestVolume > previousVolume
+    ? `Up ${delta} volume`
+    : `Down ${delta} volume`;
+}
+
+export function formatSetPerformance(
+  set: LoggedSet,
+  unit: WeightUnit = "lb",
+): string {
+  return `${set.weight} ${unit} x ${set.reps}`;
+}
+
 export function formatRepRange(exercise: Exercise): string {
   return `${exercise.sets} x ${exercise.repMin}-${exercise.repMax}`;
 }
 
-export function formatLoggedSets(log: ExerciseLog): string {
+export function formatLoggedSets(
+  log: ExerciseLog,
+  unit: WeightUnit = "lb",
+): string {
   const completedSets = log.sets.filter((set) => set.completed);
   const firstSet = completedSets[0];
 
@@ -254,10 +329,12 @@ export function formatLoggedSets(log: ExerciseLog): string {
   );
 
   if (allSetsMatch) {
-    return `${firstSet.weight} lb x ${firstSet.reps} (${completedSets.length} sets)`;
+    return `${firstSet.weight} ${unit}, ${completedSets.length} ${
+      completedSets.length === 1 ? "set" : "sets"
+    }, ${firstSet.reps} reps`;
   }
 
-  return completedSets.map((set) => `${set.weight} lb x ${set.reps}`).join(", ");
+  return completedSets.map((set) => formatSetPerformance(set, unit)).join(", ");
 }
 
 export function formatSessionDate(date: string): string {

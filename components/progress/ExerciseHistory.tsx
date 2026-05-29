@@ -4,14 +4,15 @@ import Link from "next/link";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
 import { ExerciseHistoryEntry } from "@/components/progress/ExerciseHistoryEntry";
-import { LatestPerformance } from "@/components/progress/LatestPerformance";
-import { useStoredPlan, useStoredWorkoutSessions } from "@/lib/storage";
+import { ExerciseStats } from "@/components/progress/ExerciseStats";
+import {
+  useAppSettings,
+  useStoredPlan,
+  useStoredWorkoutSessions,
+} from "@/lib/storage";
 import {
   formatRepRange,
-  formatSessionDate,
   getExerciseHistory,
-  getLatestPerformanceForExercise,
-  getLatestSessionDateForExercise,
 } from "@/lib/workout-utils";
 
 type ExerciseHistoryProps = {
@@ -19,11 +20,23 @@ type ExerciseHistoryProps = {
 };
 
 export function ExerciseHistory({ exerciseId }: ExerciseHistoryProps) {
+  const { settings } = useAppSettings();
   const { plan } = useStoredPlan();
   const { sessions } = useStoredWorkoutSessions();
-  const exercise = plan.exercises.find((item) => item.id === exerciseId);
   const history = getExerciseHistory(exerciseId, sessions);
-  const latestDate = getLatestSessionDateForExercise(exerciseId, sessions);
+  const plannedExercise = plan.exercises.find((item) => item.id === exerciseId);
+  const exercise =
+    plannedExercise ??
+    (history.length > 0
+      ? {
+          id: exerciseId,
+          muscleGroup: "Archived",
+          name: "Removed exercise",
+          repMax: 1,
+          repMin: 1,
+          sets: 1,
+        }
+      : undefined);
 
   if (!exercise) {
     return (
@@ -61,7 +74,8 @@ export function ExerciseHistory({ exerciseId }: ExerciseHistoryProps) {
           {exercise.name}
         </h1>
         <p className="mt-3 text-sm font-semibold text-white/78">
-          {formatRepRange(exercise)} reps · {history.length}{" "}
+          {plannedExercise ? `${formatRepRange(exercise)} reps · ` : ""}
+          {history.length}{" "}
           {history.length === 1 ? "session" : "sessions"}
         </p>
       </section>
@@ -75,21 +89,18 @@ export function ExerciseHistory({ exerciseId }: ExerciseHistoryProps) {
         </Card>
       ) : (
         <>
-          <Card>
-            <LatestPerformance
-              dateLabel={latestDate ? formatSessionDate(latestDate) : null}
-              performance={getLatestPerformanceForExercise(
-                exercise.id,
-                sessions,
-              )}
-            />
-          </Card>
+          <ExerciseStats
+            exerciseId={exercise.id}
+            sessions={sessions}
+            unit={settings.weightUnit}
+          />
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">History</h2>
             {history.map((entry) => (
               <ExerciseHistoryEntry
                 entry={entry}
                 key={`${entry.session.id}-${entry.log.exerciseId}`}
+                unit={settings.weightUnit}
                 workoutDay={plan.workoutDays.find(
                   (day) => day.id === entry.session.workoutDayId,
                 )}

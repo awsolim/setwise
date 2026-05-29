@@ -7,9 +7,14 @@ import { EmptyState } from "@/components/EmptyState";
 import { DaySwitcher } from "@/components/today/DaySwitcher";
 import { ExerciseTodayCard } from "@/components/today/ExerciseTodayCard";
 import { RestDayState } from "@/components/today/RestDayState";
-import { useStoredPlan, useStoredWorkoutSessions } from "@/lib/storage";
-import type { ExerciseLog, Weekday } from "@/lib/types";
 import {
+  useAppSettings,
+  useStoredPlan,
+  useStoredWorkoutSessions,
+} from "@/lib/storage";
+import type { Weekday } from "@/lib/types";
+import {
+  formatLoggedSets,
   getExercisesForWorkout,
   getLatestLogForExercise,
   getTotalPlannedSetsForWorkout,
@@ -22,32 +27,8 @@ type TodayWorkoutProps = {
   today: Weekday;
 };
 
-function formatLatestPerformance(log?: ExerciseLog): string {
-  if (!log) {
-    return "No history";
-  }
-
-  const completedSets = log.sets.filter((set) => set.completed);
-  const firstSet = completedSets[0];
-
-  if (!firstSet) {
-    return "No history";
-  }
-
-  const allSetsMatch = completedSets.every(
-    (set) => set.weight === firstSet.weight && set.reps === firstSet.reps,
-  );
-
-  if (allSetsMatch) {
-    return `${firstSet.weight} lbs, ${completedSets.length} sets, ${firstSet.reps} reps`;
-  }
-
-  return completedSets
-    .map((set) => `${set.weight} lbs x ${set.reps}`)
-    .join(", ");
-}
-
 export function TodayWorkout({ dateLabel, today }: TodayWorkoutProps) {
+  const { settings } = useAppSettings();
   const { hasHydrated, plan } = useStoredPlan();
   const { sessions } = useStoredWorkoutSessions();
   const [selectedDay, setSelectedDay] = useState<Weekday>(today);
@@ -119,9 +100,15 @@ export function TodayWorkout({ dateLabel, today }: TodayWorkoutProps) {
               <ExerciseTodayCard
                 exercise={exercise}
                 key={exercise.id}
-                latestPerformance={formatLatestPerformance(
-                  getLatestLogForExercise(exercise.id, sessions),
-                )}
+                latestPerformance={(() => {
+                  const latestLog = getLatestLogForExercise(
+                    exercise.id,
+                    sessions,
+                  );
+                  return latestLog
+                    ? formatLoggedSets(latestLog, settings.weightUnit)
+                    : "No history";
+                })()}
               />
             ))}
           </section>

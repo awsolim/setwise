@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { LatestPerformance } from "@/components/progress/LatestPerformance";
-import type { Exercise, WorkoutSession } from "@/lib/types";
+import type { Exercise, WeightUnit, WorkoutSession } from "@/lib/types";
 import {
   formatSessionDate,
   getLatestPerformanceForExercise,
@@ -11,11 +11,13 @@ import {
 type ProgressExerciseCardProps = {
   exercise: Exercise;
   sessions: WorkoutSession[];
+  unit: WeightUnit;
 };
 
 export function ProgressExerciseCard({
   exercise,
   sessions,
+  unit,
 }: ProgressExerciseCardProps) {
   const latestDate = getLatestSessionDateForExercise(exercise.id, sessions);
   const sessionCount = getSessionCountForExercise(exercise.id, sessions);
@@ -42,7 +44,7 @@ export function ProgressExerciseCard({
       </div>
       <LatestPerformance
         dateLabel={latestDate ? formatSessionDate(latestDate) : null}
-        performance={getLatestPerformanceForExercise(exercise.id, sessions)}
+        performance={getLatestPerformanceForExercise(exercise.id, sessions, unit)}
       />
     </Link>
   );

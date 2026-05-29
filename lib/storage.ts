@@ -5,12 +5,22 @@ import {
   exercises as sampleExercises,
   workoutDays as sampleWorkoutDays,
 } from "@/lib/mock-data";
-import type { Exercise, LoggedSet, WorkoutDay, WorkoutSession } from "@/lib/types";
+import type {
+  AppSettings,
+  Exercise,
+  LoggedSet,
+  Weekday,
+  WeightUnit,
+  WorkoutDay,
+  WorkoutSession,
+} from "@/lib/types";
 
 const planStorageKey = "setwise.plan.v1";
 const planChangeEventName = "setwise-plan-change";
 const sessionStorageKey = "setwise.sessions.v1";
 const sessionChangeEventName = "setwise-sessions-change";
+const settingsStorageKey = "setwise.settings.v1";
+const settingsChangeEventName = "setwise-settings-change";
 
 export type StoredPlan = {
   workoutDays: WorkoutDay[];
@@ -19,8 +29,21 @@ export type StoredPlan = {
 
 let cachedPlan: StoredPlan | null = null;
 let cachedSessions: WorkoutSession[] | null = null;
+let cachedSettings: AppSettings | null = null;
 const serverSamplePlan = getSamplePlan();
 const serverWorkoutSessions: WorkoutSession[] = [];
+const defaultSettings: AppSettings = {
+  weightUnit: "lb",
+};
+const validWeekdays: Weekday[] = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
 function clonePlan(plan: StoredPlan): StoredPlan {
   return JSON.parse(JSON.stringify(plan)) as StoredPlan;
@@ -33,84 +56,225 @@ export function getSamplePlan(): StoredPlan {
   });
 }
 
-function isWorkoutDay(value: unknown): value is WorkoutDay {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const workoutDay = value as Partial<WorkoutDay>;
-  return (
-    typeof workoutDay.id === "string" &&
-    typeof workoutDay.dayOfWeek === "string" &&
-    typeof workoutDay.title === "string" &&
-    Array.isArray(workoutDay.exerciseIds) &&
-    workoutDay.exerciseIds.every((exerciseId) => typeof exerciseId === "string")
-  );
+function isWeekday(value: unknown): value is Weekday {
+  return validWeekdays.includes(value as Weekday);
 }
 
-function isExercise(value: unknown): value is Exercise {
+function normalizeLoggedSet(value: unknown): LoggedSet | null {
   if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const exercise = value as Partial<Exercise>;
-  return (
-    typeof exercise.id === "string" &&
-    typeof exercise.name === "string" &&
-    typeof exercise.sets === "number" &&
-    typeof exercise.repMin === "number" &&
-    typeof exercise.repMax === "number"
-  );
-}
-
-function isLoggedSet(value: unknown): value is LoggedSet {
-  if (!value || typeof value !== "object") {
-    return false;
+    return null;
   }
 
   const set = value as Partial<LoggedSet>;
-  return (
-    typeof set.setNumber === "number" &&
-    typeof set.weight === "number" &&
-    typeof set.reps === "number" &&
-    typeof set.completed === "boolean"
-  );
+  const setNumber = Number(set.setNumber);
+  const weight = Number(set.weight);
+  const reps = Number(set.reps);
+
+  if (
+    !Number.isFinite(setNumber) ||
+    !Number.isFinite(weight) ||
+    !Number.isFinite(reps)
+  ) {
+    return null;
+  }
+
+  return {
+    completed: Boolean(set.completed),
+    reps: Math.max(0, reps),
+    setNumber: Math.max(1, Math.round(setNumber)),
+    weight: Math.max(0, weight),
+  };
 }
 
-function isWorkoutSession(value: unknown): value is WorkoutSession {
+function normalizeWorkoutSession(value: unknown): WorkoutSession | null {
   if (!value || typeof value !== "object") {
-    return false;
+    return null;
   }
 
   const session = value as Partial<WorkoutSession>;
-  return (
-    typeof session.id === "string" &&
-    typeof session.workoutDayId === "string" &&
-    typeof session.date === "string" &&
-    Array.isArray(session.exerciseLogs) &&
-    session.exerciseLogs.every(
-      (log) =>
-        log &&
-        typeof log === "object" &&
-        typeof log.exerciseId === "string" &&
-        Array.isArray(log.sets) &&
-        log.sets.every(isLoggedSet),
-    )
-  );
+
+  if (
+    typeof session.id !== "string" ||
+    typeof session.workoutDayId !== "string" ||
+    typeof session.date !== "string" ||
+    !Array.isArray(session.exerciseLogs)
+  ) {
+    return null;
+  }
+
+  const exerciseLogs = session.exerciseLogs.flatMap((log) => {
+    if (
+      !log ||
+      typeof log !== "object" ||
+      typeof log.exerciseId !== "string" ||
+      !Array.isArray(log.sets)
+    ) {
+      return [];
+    }
+
+    const sets = log.sets.flatMap((set) => {
+      const normalizedSet = normalizeLoggedSet(set);
+      return normalizedSet ? [normalizedSet] : [];
+    });
+
+    if (sets.length === 0) {
+      return [];
+    }
+
+    return [
+      {
+        exerciseId: log.exerciseId,
+        notes: typeof log.notes === "string" ? log.notes : undefined,
+        sets,
+      },
+    ];
+  });
+
+  return {
+    date: session.date,
+    exerciseLogs,
+    id: session.id,
+    notes: typeof session.notes === "string" ? session.notes : undefined,
+    workoutDayId: session.workoutDayId,
+  };
 }
 
-function isStoredPlan(value: unknown): value is StoredPlan {
+function isWeightUnit(value: unknown): value is WeightUnit {
+  return value === "lb" || value === "kg";
+}
+
+function isAppSettings(value: unknown): value is AppSettings {
   if (!value || typeof value !== "object") {
     return false;
   }
 
+  const settings = value as Partial<AppSettings>;
+  return isWeightUnit(settings.weightUnit);
+}
+
+function normalizeExercise(value: unknown): Exercise | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const exercise = value as Partial<Exercise>;
+  const sets = Number(exercise.sets);
+  const repMin = Number(exercise.repMin);
+  const repMax = Number(exercise.repMax);
+
+  if (
+    typeof exercise.id !== "string" ||
+    typeof exercise.name !== "string" ||
+    !Number.isFinite(sets) ||
+    !Number.isFinite(repMin) ||
+    !Number.isFinite(repMax)
+  ) {
+    return null;
+  }
+
+  const normalizedRepMin = Math.max(1, Math.round(repMin));
+
+  return {
+    id: exercise.id,
+    muscleGroup:
+      typeof exercise.muscleGroup === "string" ? exercise.muscleGroup : "",
+    name: exercise.name.trim() || "Untitled Exercise",
+    notes: typeof exercise.notes === "string" ? exercise.notes : "",
+    repMax: Math.max(normalizedRepMin, Math.round(repMax)),
+    repMin: normalizedRepMin,
+    sets: Math.max(1, Math.round(sets)),
+  };
+}
+
+function normalizeWorkoutDay(value: unknown): WorkoutDay | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const workoutDay = value as Partial<WorkoutDay>;
+
+  if (
+    typeof workoutDay.id !== "string" ||
+    !isWeekday(workoutDay.dayOfWeek) ||
+    typeof workoutDay.title !== "string" ||
+    !Array.isArray(workoutDay.exerciseIds)
+  ) {
+    return null;
+  }
+
+  return {
+    dayOfWeek: workoutDay.dayOfWeek,
+    exerciseIds: workoutDay.exerciseIds.filter(
+      (exerciseId): exerciseId is string => typeof exerciseId === "string",
+    ),
+    id: workoutDay.id,
+    notes: typeof workoutDay.notes === "string" ? workoutDay.notes : "",
+    title: workoutDay.title.trim() || "Untitled Day",
+  };
+}
+
+function normalizeStoredPlan(value: unknown): StoredPlan | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
   const plan = value as Partial<StoredPlan>;
-  return (
-    Array.isArray(plan.workoutDays) &&
-    Array.isArray(plan.exercises) &&
-    plan.workoutDays.every(isWorkoutDay) &&
-    plan.exercises.every(isExercise)
-  );
+
+  if (!Array.isArray(plan.workoutDays) || !Array.isArray(plan.exercises)) {
+    return null;
+  }
+
+  const exercises = plan.exercises.flatMap((exercise) => {
+    const normalizedExercise = normalizeExercise(exercise);
+    return normalizedExercise ? [normalizedExercise] : [];
+  });
+  const exerciseIds = new Set(exercises.map((exercise) => exercise.id));
+  const workoutDays = plan.workoutDays.flatMap((day) => {
+    const normalizedDay = normalizeWorkoutDay(day);
+    return normalizedDay
+      ? [
+          {
+            ...normalizedDay,
+            exerciseIds: normalizedDay.exerciseIds.filter((exerciseId) =>
+              exerciseIds.has(exerciseId),
+            ),
+          },
+        ]
+      : [];
+  });
+
+  if (workoutDays.length === 0) {
+    return null;
+  }
+
+  return {
+    exercises,
+    workoutDays,
+  };
+}
+
+function readStorageValue(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeStorageValue(key: string, value: string): void {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Keep the in-memory snapshot usable even if the browser blocks storage.
+  }
+}
+
+function removeStorageValue(key: string): void {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Ignore storage failures; subscribers still receive the local change.
+  }
 }
 
 export function loadStoredPlan(): StoredPlan {
@@ -118,7 +282,7 @@ export function loadStoredPlan(): StoredPlan {
     return getSamplePlan();
   }
 
-  const storedValue = window.localStorage.getItem(planStorageKey);
+  const storedValue = readStorageValue(planStorageKey);
 
   if (!storedValue) {
     return getSamplePlan();
@@ -126,7 +290,7 @@ export function loadStoredPlan(): StoredPlan {
 
   try {
     const parsedValue = JSON.parse(storedValue) as unknown;
-    return isStoredPlan(parsedValue) ? parsedValue : getSamplePlan();
+    return normalizeStoredPlan(parsedValue) ?? getSamplePlan();
   } catch {
     return getSamplePlan();
   }
@@ -134,7 +298,7 @@ export function loadStoredPlan(): StoredPlan {
 
 export function saveStoredPlan(plan: StoredPlan): void {
   cachedPlan = plan;
-  window.localStorage.setItem(planStorageKey, JSON.stringify(plan));
+  writeStorageValue(planStorageKey, JSON.stringify(plan));
   window.dispatchEvent(new Event(planChangeEventName));
 }
 
@@ -149,7 +313,7 @@ export function loadStoredWorkoutSessions(): WorkoutSession[] {
     return [];
   }
 
-  const storedValue = window.localStorage.getItem(sessionStorageKey);
+  const storedValue = readStorageValue(sessionStorageKey);
 
   if (!storedValue) {
     return [];
@@ -157,8 +321,11 @@ export function loadStoredWorkoutSessions(): WorkoutSession[] {
 
   try {
     const parsedValue = JSON.parse(storedValue) as unknown;
-    return Array.isArray(parsedValue) && parsedValue.every(isWorkoutSession)
-      ? parsedValue
+    return Array.isArray(parsedValue)
+      ? parsedValue.flatMap((session) => {
+          const normalizedSession = normalizeWorkoutSession(session);
+          return normalizedSession ? [normalizedSession] : [];
+        })
       : [];
   } catch {
     return [];
@@ -167,7 +334,7 @@ export function loadStoredWorkoutSessions(): WorkoutSession[] {
 
 export function saveStoredWorkoutSessions(sessions: WorkoutSession[]): void {
   cachedSessions = sessions;
-  window.localStorage.setItem(sessionStorageKey, JSON.stringify(sessions));
+  writeStorageValue(sessionStorageKey, JSON.stringify(sessions));
   window.dispatchEvent(new Event(sessionChangeEventName));
 }
 
@@ -176,6 +343,53 @@ export function saveWorkoutSession(session: WorkoutSession): WorkoutSession[] {
   const nextSessions = [...sessions, session];
   saveStoredWorkoutSessions(nextSessions);
   return nextSessions;
+}
+
+export function updateWorkoutSession(session: WorkoutSession): WorkoutSession[] {
+  const sessions = loadStoredWorkoutSessions();
+  const nextSessions = sessions.map((savedSession) =>
+    savedSession.id === session.id ? session : savedSession,
+  );
+  saveStoredWorkoutSessions(nextSessions);
+  return nextSessions;
+}
+
+export function deleteWorkoutSession(sessionId: string): WorkoutSession[] {
+  const sessions = loadStoredWorkoutSessions();
+  const nextSessions = sessions.filter((session) => session.id !== sessionId);
+  saveStoredWorkoutSessions(nextSessions);
+  return nextSessions;
+}
+
+export function clearStoredWorkoutSessions(): void {
+  cachedSessions = [];
+  removeStorageValue(sessionStorageKey);
+  window.dispatchEvent(new Event(sessionChangeEventName));
+}
+
+export function loadAppSettings(): AppSettings {
+  if (typeof window === "undefined") {
+    return defaultSettings;
+  }
+
+  const storedValue = readStorageValue(settingsStorageKey);
+
+  if (!storedValue) {
+    return defaultSettings;
+  }
+
+  try {
+    const parsedValue = JSON.parse(storedValue) as unknown;
+    return isAppSettings(parsedValue) ? parsedValue : defaultSettings;
+  } catch {
+    return defaultSettings;
+  }
+}
+
+export function saveAppSettings(settings: AppSettings): void {
+  cachedSettings = settings;
+  writeStorageValue(settingsStorageKey, JSON.stringify(settings));
+  window.dispatchEvent(new Event(settingsChangeEventName));
 }
 
 function subscribeToStoredPlan(onStoreChange: () => void): () => void {
@@ -232,6 +446,33 @@ function getServerWorkoutSessionsSnapshot(): WorkoutSession[] {
   return serverWorkoutSessions;
 }
 
+function subscribeToAppSettings(onStoreChange: () => void): () => void {
+  function handleStorageChange() {
+    cachedSettings = loadAppSettings();
+    onStoreChange();
+  }
+
+  window.addEventListener(settingsChangeEventName, onStoreChange);
+  window.addEventListener("storage", handleStorageChange);
+
+  return () => {
+    window.removeEventListener(settingsChangeEventName, onStoreChange);
+    window.removeEventListener("storage", handleStorageChange);
+  };
+}
+
+function getAppSettingsSnapshot(): AppSettings {
+  if (!cachedSettings) {
+    cachedSettings = loadAppSettings();
+  }
+
+  return cachedSettings;
+}
+
+function getServerAppSettingsSnapshot(): AppSettings {
+  return defaultSettings;
+}
+
 export function useStoredPlan() {
   const plan = useSyncExternalStore(
     subscribeToStoredPlan,
@@ -260,7 +501,23 @@ export function useStoredWorkoutSessions() {
   );
 
   return {
+    clearSessions: clearStoredWorkoutSessions,
+    deleteSession: (sessionId: string) => deleteWorkoutSession(sessionId),
     saveSession: (session: WorkoutSession) => saveWorkoutSession(session),
     sessions,
+    updateSession: (session: WorkoutSession) => updateWorkoutSession(session),
+  };
+}
+
+export function useAppSettings() {
+  const settings = useSyncExternalStore(
+    subscribeToAppSettings,
+    getAppSettingsSnapshot,
+    getServerAppSettingsSnapshot,
+  );
+
+  return {
+    saveSettings: (nextSettings: AppSettings) => saveAppSettings(nextSettings),
+    settings,
   };
 }

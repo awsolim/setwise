@@ -12,7 +12,7 @@ export function FinishWorkoutBar({
   onFinish,
 }: FinishWorkoutBarProps) {
   return (
-    <div className="sticky bottom-24 z-10 space-y-2 rounded-[1.35rem] border border-border-soft bg-surface/95 p-3 shadow-[0_16px_36px_rgba(43,38,28,0.14)] backdrop-blur">
+    <div className="sticky bottom-28 z-10 space-y-2 rounded-[1.35rem] border border-border-soft bg-surface/95 p-3 shadow-[0_16px_36px_rgba(43,38,28,0.14)] backdrop-blur">
       {error ? (
         <p className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm leading-5 text-red-700">
           {error}

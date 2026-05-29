@@ -29,11 +29,13 @@ export type WorkoutSession = {
   id: string;
   workoutDayId: string;
   date: string;
+  notes?: string;
   exerciseLogs: ExerciseLog[];
 };
 
 export type ExerciseLog = {
   exerciseId: string;
+  notes?: string;
   sets: LoggedSet[];
 };
 
@@ -42,4 +44,10 @@ export type LoggedSet = {
   weight: number;
   reps: number;
   completed: boolean;
+};
+
+export type WeightUnit = "lb" | "kg";
+
+export type AppSettings = {
+  weightUnit: WeightUnit;
 };

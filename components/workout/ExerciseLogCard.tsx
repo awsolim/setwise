@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { SetLogRow } from "@/components/workout/SetLogRow";
-import type { Exercise, ExerciseLog, LoggedSet, WorkoutSession } from "@/lib/types";
+import type {
+  Exercise,
+  ExerciseLog,
+  LoggedSet,
+  WeightUnit,
+  WorkoutSession,
+} from "@/lib/types";
 import {
   formatLoggedSets,
   formatRepRange,
@@ -14,6 +20,7 @@ type ExerciseLogCardProps = {
   exercise: Exercise;
   log: ExerciseLog;
   sessions: WorkoutSession[];
+  unit: WeightUnit;
   onChange: (log: ExerciseLog) => void;
 };
 
@@ -21,6 +28,7 @@ export function ExerciseLogCard({
   exercise,
   log,
   sessions,
+  unit,
   onChange,
 }: ExerciseLogCardProps) {
   const [showHistory, setShowHistory] = useState(false);
@@ -57,6 +65,42 @@ export function ExerciseLogCard({
     });
   }
 
+  function updateNotes(notes: string) {
+    onChange({
+      ...log,
+      notes,
+    });
+  }
+
+  function addExtraSet() {
+    const nextSetNumber =
+      Math.max(0, ...log.sets.map((set) => set.setNumber)) + 1;
+
+    onChange({
+      ...log,
+      sets: [
+        ...log.sets,
+        {
+          completed: false,
+          reps: 0,
+          setNumber: nextSetNumber,
+          weight: 0,
+        },
+      ],
+    });
+  }
+
+  function removeExtraSet(setNumber: number) {
+    if (setNumber <= exercise.sets) {
+      return;
+    }
+
+    onChange({
+      ...log,
+      sets: log.sets.filter((set) => set.setNumber !== setNumber),
+    });
+  }
+
   return (
     <section className="rounded-[1.35rem] border border-border-soft bg-surface/70 px-4 py-4">
       <div className="flex items-start justify-between gap-3">
@@ -81,27 +125,57 @@ export function ExerciseLogCard({
 
       <div className="mt-4 space-y-2">
         {log.sets.map((set) => (
-          <SetLogRow
-            key={set.setNumber}
-            onChange={updateSet}
-            placeholder={history[0]?.log.sets.find(
-              (previousSet) => previousSet.setNumber === set.setNumber,
-            )}
-            set={set}
-          />
+          <div className="space-y-1" key={set.setNumber}>
+            <SetLogRow
+              onChange={updateSet}
+              placeholder={history[0]?.log.sets.find(
+                (previousSet) => previousSet.setNumber === set.setNumber,
+              )}
+              set={set}
+              unit={unit}
+            />
+            {set.setNumber > exercise.sets ? (
+              <button
+                className="ml-auto block min-h-9 rounded-xl px-3 text-sm font-semibold text-red-700"
+                onClick={() => removeExtraSet(set.setNumber)}
+                type="button"
+              >
+                Remove extra set
+              </button>
+            ) : null}
+          </div>
         ))}
       </div>
 
-      <div className="mt-3 flex gap-2">
+      <label className="mt-3 block">
+        <span className="text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-muted">
+          Exercise note
+        </span>
+        <textarea
+          className="mt-2 min-h-20 w-full resize-none rounded-2xl border border-border-soft bg-white px-3 py-3 text-sm leading-6 text-foreground outline-none focus:border-accent"
+          onChange={(event) => updateNotes(event.target.value)}
+          placeholder="Anything worth remembering?"
+          value={log.notes ?? ""}
+        />
+      </label>
+
+      <div className="mt-3 grid grid-cols-3 gap-2">
         <button
-          className="min-h-10 flex-1 rounded-2xl bg-surface-muted px-3 text-sm font-semibold text-foreground"
+          className="min-h-10 rounded-2xl bg-surface-muted px-3 text-sm font-semibold text-foreground"
           onClick={applyFirstSetToAll}
           type="button"
         >
           Apply Set 1 to all
         </button>
         <button
-          className="min-h-10 flex-1 rounded-2xl bg-surface-muted px-3 text-sm font-semibold text-foreground"
+          className="min-h-10 rounded-2xl bg-surface-muted px-3 text-sm font-semibold text-foreground"
+          onClick={addExtraSet}
+          type="button"
+        >
+          Add set
+        </button>
+        <button
+          className="min-h-10 rounded-2xl bg-surface-muted px-3 text-sm font-semibold text-foreground"
           onClick={() => setShowHistory((value) => !value)}
           type="button"
         >
@@ -122,7 +196,7 @@ export function ExerciseLogCard({
                     {formatSessionDate(entry.session.date)}
                   </span>
                   <span className="text-right font-medium leading-5 text-foreground">
-                    {formatLoggedSets(entry.log)}
+                    {formatLoggedSets(entry.log, unit)}
                   </span>
                 </li>
               ))}
