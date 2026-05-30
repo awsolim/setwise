@@ -21,6 +21,7 @@ const emptyTargets: MuscleTargets = {
 };
 
 const ids = {
+  adductors: ["adductors-left", "adductors-right"],
   biceps: ["biceps-left", "biceps-right"],
   calves: [
     "calves-gastroc-medial-left",
@@ -33,6 +34,7 @@ const ids = {
   chestLower: ["chest-lower-left", "chest-lower-right"],
   chestUpper: ["chest-upper-left", "chest-upper-right"],
   frontDelts: ["shoulder-front-left", "shoulder-front-right"],
+  forearms: ["forearm-left", "forearm-right"],
   glutes: [
     "gluteus-medius-left",
     "gluteus-maximus-left",
@@ -81,12 +83,39 @@ function targets(
   return { view, primaryIds, secondaryIds };
 }
 
+function nameHasAny(name: string, terms: string[]): boolean {
+  return terms.some((term) => name.includes(term));
+}
+
 export function getMuscleTargetsForExercise(exercise: Exercise): MuscleTargets {
   const name = exercise.name.toLowerCase();
   const muscleGroup = exercise.muscleGroup?.toLowerCase();
 
-  if (name.includes("incline")) {
+  if (
+    nameHasAny(name, ["incline dumbbell press", "incline db press"]) ||
+    (name.includes("incline") && name.includes("press"))
+  ) {
     return targets("FRONT", ids.chestUpper, [...ids.frontDelts, ...ids.triceps]);
+  }
+
+  if (
+    nameHasAny(name, ["flat dumbbell press", "flat db press"]) ||
+    (name.includes("dumbbell press") && !name.includes("shoulder")) ||
+    (name.includes("db press") && !name.includes("shoulder"))
+  ) {
+    return targets(
+      "FRONT",
+      [...ids.chestUpper, ...ids.chestLower],
+      [...ids.frontDelts, ...ids.triceps],
+    );
+  }
+
+  if (nameHasAny(name, ["chest fly", "chest flies", "pec deck", "machine fly"])) {
+    return targets(
+      "FRONT",
+      [...ids.chestUpper, ...ids.chestLower],
+      ids.frontDelts,
+    );
   }
 
   if (name.includes("chest press")) {
@@ -101,28 +130,78 @@ export function getMuscleTargetsForExercise(exercise: Exercise): MuscleTargets {
     return targets("FRONT", ids.sideDelts, [...ids.frontDelts, ...ids.traps]);
   }
 
-  if (name.includes("shoulder press")) {
-    return targets("FRONT", [...ids.frontDelts, ...ids.sideDelts], ids.triceps);
+  if (nameHasAny(name, ["rear delt fly", "rear delt flies", "reverse fly"])) {
+    return targets("BACK", ids.rearDelts, [...ids.midBack, ...ids.traps]);
   }
 
-  if (name.includes("pushdown")) {
+  if (
+    name.includes("shoulder press") ||
+    name.includes("seated shoulder") ||
+    (name.includes("db press") && name.includes("75"))
+  ) {
+    return targets("FRONT", ids.frontDelts, [...ids.sideDelts, ...ids.triceps]);
+  }
+
+  if (
+    name.includes("pushdown") ||
+    name.includes("push down") ||
+    name.includes("katana")
+  ) {
     return targets("BACK", ids.triceps, ids.frontDelts);
   }
 
-  if (name.includes("pulldown")) {
+  if (name.includes("pullup") || name.includes("pull-up")) {
+    return targets("BACK", ids.lats, [...ids.biceps, ...ids.midBack]);
+  }
+
+  if (name.includes("pulldown") || name.includes("pull down")) {
     return targets("BACK", ids.lats, [...ids.biceps, ...ids.midBack]);
   }
 
   if (name.includes("row")) {
-    return targets("BACK", [...ids.midBack, ...ids.lats], [...ids.rearDelts, ...ids.biceps]);
+    return targets(
+      "BACK",
+      name.includes("neutral") || name.includes("unilateral")
+        ? ids.lats
+        : [...ids.midBack, ...ids.lats],
+      [...ids.midBack, ...ids.rearDelts, ...ids.biceps],
+    );
+  }
+
+  if (name.includes("hammer curl")) {
+    return targets("FRONT", ids.forearms, ids.biceps);
+  }
+
+  if (name.includes("curl")) {
+    return targets("FRONT", ids.biceps, ids.forearms);
   }
 
   if (name.includes("leg press")) {
     return targets("FRONT", ids.quads, ids.glutes);
   }
 
+  if (name.includes("leg extension")) {
+    return targets("FRONT", ids.quads);
+  }
+
   if (name.includes("leg curl")) {
     return targets("BACK", ids.hamstrings, ids.calves);
+  }
+
+  if (name.includes("hack squat")) {
+    return targets("FRONT", ids.quads, [...ids.glutes, ...ids.adductors]);
+  }
+
+  if (name.includes("bulgarian")) {
+    if (name.includes("far") || name.includes("long")) {
+      return targets("BACK", ids.glutes, [...ids.quads, ...ids.adductors]);
+    }
+
+    return targets("FRONT", ids.quads, [...ids.glutes, ...ids.adductors]);
+  }
+
+  if (name.includes("squat")) {
+    return targets("FRONT", ids.quads, [...ids.glutes, ...ids.adductors]);
   }
 
   if (name.includes("romanian")) {
@@ -184,8 +263,23 @@ export function getExerciseTargetSummary(
   const name = exercise.name.toLowerCase();
   const muscleGroup = exercise.muscleGroup?.toLowerCase();
 
-  if (name.includes("incline")) {
+  if (
+    nameHasAny(name, ["incline dumbbell press", "incline db press"]) ||
+    (name.includes("incline") && name.includes("press"))
+  ) {
     return { emphasis: "Upper chest", sideTarget: "Front delts" };
+  }
+
+  if (
+    nameHasAny(name, ["flat dumbbell press", "flat db press"]) ||
+    (name.includes("dumbbell press") && !name.includes("shoulder")) ||
+    (name.includes("db press") && !name.includes("shoulder"))
+  ) {
+    return { emphasis: "Chest", sideTarget: "Front delts" };
+  }
+
+  if (nameHasAny(name, ["chest fly", "chest flies", "pec deck", "machine fly"])) {
+    return { emphasis: "Chest", sideTarget: "Front delts" };
   }
 
   if (name.includes("chest press")) {
@@ -196,28 +290,74 @@ export function getExerciseTargetSummary(
     return { emphasis: "Side delts", sideTarget: "Front delts" };
   }
 
-  if (name.includes("shoulder press")) {
+  if (nameHasAny(name, ["rear delt fly", "rear delt flies", "reverse fly"])) {
+    return { emphasis: "Rear delts", sideTarget: "Mid back" };
+  }
+
+  if (
+    name.includes("shoulder press") ||
+    name.includes("seated shoulder") ||
+    (name.includes("db press") && name.includes("75"))
+  ) {
     return { emphasis: "Front delts", sideTarget: "Triceps" };
   }
 
-  if (name.includes("pushdown")) {
+  if (name.includes("katana")) {
+    return { emphasis: "Triceps long head", sideTarget: "Front delts" };
+  }
+
+  if (name.includes("pushdown") || name.includes("push down")) {
     return { emphasis: "Triceps", sideTarget: "Front delts" };
   }
 
-  if (name.includes("pulldown")) {
+  if (name.includes("pullup") || name.includes("pull-up")) {
+    return { emphasis: "Lats", sideTarget: "Biceps" };
+  }
+
+  if (name.includes("pulldown") || name.includes("pull down")) {
     return { emphasis: "Lats", sideTarget: "Biceps" };
   }
 
   if (name.includes("row")) {
-    return { emphasis: "Mid back", sideTarget: "Rear delts" };
+    return name.includes("neutral") || name.includes("unilateral")
+      ? { emphasis: "Lats", sideTarget: "Mid back" }
+      : { emphasis: "Mid back", sideTarget: "Rear delts" };
+  }
+
+  if (name.includes("hammer curl")) {
+    return { emphasis: "Brachialis", sideTarget: "Forearms" };
+  }
+
+  if (name.includes("curl")) {
+    return { emphasis: "Biceps", sideTarget: "Forearms" };
   }
 
   if (name.includes("leg press")) {
     return { emphasis: "Quads", sideTarget: "Glutes" };
   }
 
+  if (name.includes("leg extension")) {
+    return { emphasis: "Quads", sideTarget: "Knee extension" };
+  }
+
   if (name.includes("leg curl")) {
     return { emphasis: "Hamstrings", sideTarget: "Calves" };
+  }
+
+  if (name.includes("hack squat")) {
+    return { emphasis: "Quads", sideTarget: "Glutes" };
+  }
+
+  if (name.includes("bulgarian")) {
+    if (name.includes("far") || name.includes("long")) {
+      return { emphasis: "Glutes", sideTarget: "Quads" };
+    }
+
+    return { emphasis: "Quads", sideTarget: "Glutes" };
+  }
+
+  if (name.includes("squat")) {
+    return { emphasis: "Quads", sideTarget: "Glutes" };
   }
 
   if (name.includes("romanian")) {

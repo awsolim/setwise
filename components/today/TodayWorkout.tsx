@@ -120,6 +120,19 @@ export function TodayWorkout({ dateLabel, today }: TodayWorkoutProps) {
           <Link
             className="dark-action flex min-h-14 w-full items-center justify-center rounded-2xl bg-gradient-to-b from-[#4f8b72] via-[#2f6a55] to-[#173b32] px-5 text-base font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_14px_28px_rgba(23,59,50,0.24)] transition active:scale-[0.99]"
             href={`/workout/${workoutDay.id}`}
+            onClick={(event) => {
+              if (selectedIsToday) {
+                return;
+              }
+
+              const confirmed = window.confirm(
+                `Start ${selectedDay}'s workout instead of today's workout?`,
+              );
+
+              if (!confirmed) {
+                event.preventDefault();
+              }
+            }}
             style={{
               color: "#ffffff",
               textShadow: "0 1px 1px rgba(0,0,0,0.35)",

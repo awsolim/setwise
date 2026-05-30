@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
@@ -45,6 +46,7 @@ function replaceWorkoutDay(
 }
 
 export function WorkoutDayEditor({ dayId }: WorkoutDayEditorProps) {
+  const router = useRouter();
   const { hasHydrated, plan, savePlan } = useStoredPlan();
   const [draftPlan, setDraftPlan] = useState<StoredPlan | null>(null);
   const [status, setStatus] = useState<SaveStatus>("clean");
@@ -187,6 +189,7 @@ export function WorkoutDayEditor({ dayId }: WorkoutDayEditorProps) {
     savePlan(activePlan);
     setDraftPlan(null);
     setStatus("saved");
+    router.push("/plan");
   }
 
   if (!hasHydrated) {
@@ -221,13 +224,7 @@ export function WorkoutDayEditor({ dayId }: WorkoutDayEditorProps) {
 
   return (
     <div className="space-y-4 pb-8">
-      <div className="flex items-center justify-between gap-3">
-        <Link
-          className="inline-flex min-h-9 items-center rounded-full px-1 text-sm font-semibold text-muted hover:text-foreground"
-          href="/plan"
-        >
-          &lt; Plan
-        </Link>
+      <div className="flex items-center justify-end gap-3">
         <span className="text-sm font-medium text-muted">
           {status === "dirty"
             ? "Unsaved changes"
