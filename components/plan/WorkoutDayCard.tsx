@@ -35,33 +35,31 @@ export function WorkoutDayCard({
           isToday ? "border-accent" : "border-border-soft",
         ].join(" ")}
       >
-        <div className="flex items-center gap-2 px-4 py-3">
+        <div className="flex items-center gap-3 px-4 py-3.5">
           <button
             aria-expanded={isOpen}
-            className="min-h-12 min-w-0 flex-1 text-left"
+            className="min-h-16 min-w-0 flex-1 text-left"
             onClick={() => setIsOpen((open) => !open)}
             type="button"
           >
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-accent">
+            <div className="flex min-w-0 items-center gap-2">
+              <p className="truncate text-sm font-semibold text-accent">
                 {workoutDay.dayOfWeek}
               </p>
               {isToday ? (
-                <span className="rounded-full bg-accent px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-white">
+                <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-white">
                   Today
                 </span>
               ) : null}
             </div>
-            <div className="mt-1 flex items-end justify-between gap-3">
-              <h2 className="truncate text-lg font-semibold text-foreground">
-                {workoutDay.title}
-              </h2>
-              <p className="shrink-0 text-xs font-semibold text-muted">
-                {restDay
-                  ? "Rest"
-                  : `${getExerciseCountLabel(exercises.length)} · ${totalSets} sets`}
-              </p>
-            </div>
+            <h2 className="mt-1.5 break-words text-lg font-semibold leading-6 text-foreground">
+              {workoutDay.title}
+            </h2>
+            <p className="mt-1 text-xs font-semibold text-muted">
+              {restDay
+                ? "Rest"
+                : `${getExerciseCountLabel(exercises.length)} · ${totalSets} sets`}
+            </p>
           </button>
 
           {editable ? (

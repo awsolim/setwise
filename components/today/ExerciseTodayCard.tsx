@@ -44,7 +44,10 @@ export function ExerciseTodayCard({
         <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
           <Detail label="Emphasis" value={targetSummary.emphasis} />
           <Detail label="Side Target" value={targetSummary.sideTarget} />
-          <Detail label="Sets" value={String(exercise.sets)} />
+          <Detail
+            label="Sets"
+            value={`${exercise.sets}${exercise.isUnilateral ? " each side" : ""}`}
+          />
           <Detail label="Reps" value={formatRepRange(exercise).split(" x ")[1]} />
           <div className="col-span-2">
             <Detail label="Last" value={latestPerformance} />

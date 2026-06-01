@@ -19,10 +19,23 @@ export type Exercise = {
   id: string;
   name: string;
   muscleGroup?: string;
+  isUnilateral?: boolean;
   sets: number;
   repMin: number;
   repMax: number;
   notes?: string;
+};
+
+export type SavedPlan = {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+  plan: {
+    workoutDays: WorkoutDay[];
+    exercises: Exercise[];
+  };
 };
 
 export type WorkoutSession = {

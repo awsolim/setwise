@@ -3,12 +3,14 @@
 import { useSyncExternalStore } from "react";
 import {
   exercises as sampleExercises,
+  savedPlanTemplates,
   workoutDays as sampleWorkoutDays,
 } from "@/lib/mock-data";
 import type {
   AppSettings,
   Exercise,
   LoggedSet,
+  SavedPlan,
   Weekday,
   WeightUnit,
   WorkoutDay,
@@ -21,6 +23,8 @@ const sessionStorageKey = "setwise.sessions.v1";
 const sessionChangeEventName = "setwise-sessions-change";
 const settingsStorageKey = "setwise.settings.v1";
 const settingsChangeEventName = "setwise-settings-change";
+const savedPlansStorageKey = "setwise.saved-plans.v1";
+const savedPlansChangeEventName = "setwise-saved-plans-change";
 
 export type StoredPlan = {
   workoutDays: WorkoutDay[];
@@ -30,8 +34,10 @@ export type StoredPlan = {
 let cachedPlan: StoredPlan | null = null;
 let cachedSessions: WorkoutSession[] | null = null;
 let cachedSettings: AppSettings | null = null;
+let cachedSavedPlans: SavedPlan[] | null = null;
 const serverSamplePlan = getSamplePlan();
 const serverWorkoutSessions: WorkoutSession[] = [];
+const serverSavedPlans = getDefaultSavedPlans();
 const defaultSettings: AppSettings = {
   weightUnit: "lb",
 };
@@ -49,11 +55,25 @@ function clonePlan(plan: StoredPlan): StoredPlan {
   return JSON.parse(JSON.stringify(plan)) as StoredPlan;
 }
 
+function cloneSavedPlans(plans: SavedPlan[]): SavedPlan[] {
+  return JSON.parse(JSON.stringify(plans)) as SavedPlan[];
+}
+
 export function getSamplePlan(): StoredPlan {
-  return clonePlan({
-    workoutDays: sampleWorkoutDays,
-    exercises: sampleExercises,
-  });
+  const defaultTemplate = savedPlanTemplates.find(
+    (savedPlan) => savedPlan.id === "weekday-five-day-split",
+  );
+
+  return clonePlan(
+    defaultTemplate?.plan ?? {
+      workoutDays: sampleWorkoutDays,
+      exercises: sampleExercises,
+    },
+  );
+}
+
+export function getDefaultSavedPlans(): SavedPlan[] {
+  return cloneSavedPlans(savedPlanTemplates);
 }
 
 function isWeekday(value: unknown): value is Weekday {
@@ -176,6 +196,7 @@ function normalizeExercise(value: unknown): Exercise | null {
 
   return {
     id: exercise.id,
+    isUnilateral: Boolean(exercise.isUnilateral),
     muscleGroup:
       typeof exercise.muscleGroup === "string" ? exercise.muscleGroup : "",
     name: exercise.name.trim() || "Untitled Exercise",
@@ -183,6 +204,39 @@ function normalizeExercise(value: unknown): Exercise | null {
     repMax: Math.max(normalizedRepMin, Math.round(repMax)),
     repMin: normalizedRepMin,
     sets: Math.max(1, Math.round(sets)),
+  };
+}
+
+function normalizeSavedPlan(value: unknown): SavedPlan | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const savedPlan = value as Partial<SavedPlan>;
+  const normalizedPlan = normalizeStoredPlan(savedPlan.plan);
+
+  if (
+    typeof savedPlan.id !== "string" ||
+    typeof savedPlan.name !== "string" ||
+    !normalizedPlan
+  ) {
+    return null;
+  }
+
+  return {
+    createdAt:
+      typeof savedPlan.createdAt === "string"
+        ? savedPlan.createdAt
+        : new Date().toISOString(),
+    description:
+      typeof savedPlan.description === "string" ? savedPlan.description : "",
+    id: savedPlan.id,
+    name: savedPlan.name.trim() || "Untitled Plan",
+    plan: normalizedPlan,
+    updatedAt:
+      typeof savedPlan.updatedAt === "string"
+        ? savedPlan.updatedAt
+        : new Date().toISOString(),
   };
 }
 
@@ -392,6 +446,62 @@ export function saveAppSettings(settings: AppSettings): void {
   window.dispatchEvent(new Event(settingsChangeEventName));
 }
 
+export function loadSavedPlans(): SavedPlan[] {
+  if (typeof window === "undefined") {
+    return getDefaultSavedPlans();
+  }
+
+  const storedValue = readStorageValue(savedPlansStorageKey);
+
+  if (!storedValue) {
+    return getDefaultSavedPlans();
+  }
+
+  try {
+    const parsedValue = JSON.parse(storedValue) as unknown;
+    const normalizedPlans = Array.isArray(parsedValue)
+      ? parsedValue.flatMap((plan) => {
+          const normalizedPlan = normalizeSavedPlan(plan);
+          return normalizedPlan ? [normalizedPlan] : [];
+        })
+      : [];
+
+    return normalizedPlans.length > 0 ? normalizedPlans : getDefaultSavedPlans();
+  } catch {
+    return getDefaultSavedPlans();
+  }
+}
+
+export function saveSavedPlans(plans: SavedPlan[]): void {
+  cachedSavedPlans = plans;
+  writeStorageValue(savedPlansStorageKey, JSON.stringify(plans));
+  window.dispatchEvent(new Event(savedPlansChangeEventName));
+}
+
+export function savePlanToLibrary(
+  name: string,
+  description: string,
+  plan: StoredPlan,
+): SavedPlan[] {
+  const now = new Date().toISOString();
+  const id =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `saved-plan-${Date.now()}`;
+  const savedPlan: SavedPlan = {
+    createdAt: now,
+    description,
+    id,
+    name: name.trim() || "Untitled Plan",
+    plan: clonePlan(plan),
+    updatedAt: now,
+  };
+  const plans = loadSavedPlans();
+  const nextPlans = [savedPlan, ...plans];
+  saveSavedPlans(nextPlans);
+  return nextPlans;
+}
+
 function subscribeToStoredPlan(onStoreChange: () => void): () => void {
   function handleStorageChange() {
     cachedPlan = loadStoredPlan();
@@ -473,6 +583,33 @@ function getServerAppSettingsSnapshot(): AppSettings {
   return defaultSettings;
 }
 
+function subscribeToSavedPlans(onStoreChange: () => void): () => void {
+  function handleStorageChange() {
+    cachedSavedPlans = loadSavedPlans();
+    onStoreChange();
+  }
+
+  window.addEventListener(savedPlansChangeEventName, onStoreChange);
+  window.addEventListener("storage", handleStorageChange);
+
+  return () => {
+    window.removeEventListener(savedPlansChangeEventName, onStoreChange);
+    window.removeEventListener("storage", handleStorageChange);
+  };
+}
+
+function getSavedPlansSnapshot(): SavedPlan[] {
+  if (!cachedSavedPlans) {
+    cachedSavedPlans = loadSavedPlans();
+  }
+
+  return cachedSavedPlans;
+}
+
+function getServerSavedPlansSnapshot(): SavedPlan[] {
+  return serverSavedPlans;
+}
+
 export function useStoredPlan() {
   const plan = useSyncExternalStore(
     subscribeToStoredPlan,
@@ -519,5 +656,22 @@ export function useAppSettings() {
   return {
     saveSettings: (nextSettings: AppSettings) => saveAppSettings(nextSettings),
     settings,
+  };
+}
+
+export function useSavedPlans() {
+  const savedPlans = useSyncExternalStore(
+    subscribeToSavedPlans,
+    getSavedPlansSnapshot,
+    getServerSavedPlansSnapshot,
+  );
+
+  return {
+    saveCurrentPlan: (
+      name: string,
+      description: string,
+      plan: StoredPlan,
+    ) => savePlanToLibrary(name, description, plan),
+    savedPlans,
   };
 }

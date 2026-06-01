@@ -310,7 +310,11 @@ export function formatSetPerformance(
 }
 
 export function formatRepRange(exercise: Exercise): string {
-  return `${exercise.sets} x ${exercise.repMin}-${exercise.repMax}`;
+  const reps =
+    exercise.repMin === exercise.repMax
+      ? String(exercise.repMin)
+      : `${exercise.repMin}-${exercise.repMax}`;
+  return `${exercise.sets} x ${reps}${exercise.isUnilateral ? " each side" : ""}`;
 }
 
 export function formatLoggedSets(

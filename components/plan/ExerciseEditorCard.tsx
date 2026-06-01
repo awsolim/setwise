@@ -124,6 +124,25 @@ export function ExerciseEditorCard({
           </label>
         </div>
 
+        <label className="flex min-h-12 items-center justify-between gap-3 rounded-2xl border border-border-soft bg-surface px-4">
+          <span>
+            <span className="block text-sm font-medium text-foreground">
+              Each side
+            </span>
+            <span className="block text-xs leading-5 text-muted">
+              Use for unilateral exercises.
+            </span>
+          </span>
+          <input
+            checked={Boolean(exercise.isUnilateral)}
+            className="size-5 accent-[#173b32]"
+            onChange={(event) =>
+              onChange({ ...exercise, isUnilateral: event.target.checked })
+            }
+            type="checkbox"
+          />
+        </label>
+
         <label className="block">
           <span className="text-sm font-medium text-foreground">Notes</span>
           <textarea
