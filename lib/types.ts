@@ -20,9 +20,18 @@ export type Exercise = {
   name: string;
   muscleGroup?: string;
   isUnilateral?: boolean;
+  backupOptions?: ExerciseBackupOption[];
   sets: number;
   repMin: number;
   repMax: number;
+  notes?: string;
+};
+
+export type ExerciseBackupOption = {
+  id: string;
+  name: string;
+  muscleGroup?: string;
+  isUnilateral?: boolean;
   notes?: string;
 };
 
@@ -48,6 +57,7 @@ export type WorkoutSession = {
 
 export type ExerciseLog = {
   exerciseId: string;
+  performedExerciseName?: string;
   notes?: string;
   sets: LoggedSet[];
 };

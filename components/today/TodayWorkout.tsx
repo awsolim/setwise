@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
 import { DaySwitcher } from "@/components/today/DaySwitcher";
@@ -15,31 +15,63 @@ import {
 import type { Weekday } from "@/lib/types";
 import {
   formatLoggedSets,
+  getCurrentDateLabel,
   getExercisesForWorkout,
   getLatestLogForExercise,
+  getTodayWeekday,
   getTotalPlannedSetsForWorkout,
   getWorkoutForWeekday,
   isRestDay,
 } from "@/lib/workout-utils";
 
-type TodayWorkoutProps = {
+type LocalToday = {
   dateLabel: string;
   today: Weekday;
 };
 
-export function TodayWorkout({ dateLabel, today }: TodayWorkoutProps) {
+let cachedLocalToday: LocalToday | null = null;
+
+function subscribeToLocalToday() {
+  return () => {};
+}
+
+function getLocalTodaySnapshot(): LocalToday {
+  if (!cachedLocalToday) {
+    const now = new Date();
+    cachedLocalToday = {
+      dateLabel: getCurrentDateLabel(now),
+      today: getTodayWeekday(now),
+    };
+  }
+
+  return cachedLocalToday;
+}
+
+function getServerLocalTodaySnapshot(): LocalToday | null {
+  return null;
+}
+
+export function TodayWorkout() {
   const { settings } = useAppSettings();
   const { hasHydrated, plan } = useStoredPlan();
   const { sessions } = useStoredWorkoutSessions();
-  const [selectedDay, setSelectedDay] = useState<Weekday>(today);
-  const workoutDay = getWorkoutForWeekday(plan.workoutDays, selectedDay);
+  const localToday = useSyncExternalStore(
+    subscribeToLocalToday,
+    getLocalTodaySnapshot,
+    getServerLocalTodaySnapshot,
+  );
+  const [selectedDay, setSelectedDay] = useState<Weekday | null>(null);
+  const today = localToday?.today ?? "Monday";
+  const dateLabel = localToday?.dateLabel ?? "Loading";
+  const activeSelectedDay = selectedDay ?? today;
+  const workoutDay = getWorkoutForWeekday(plan.workoutDays, activeSelectedDay);
   const workoutExercises = workoutDay
     ? getExercisesForWorkout(workoutDay, plan.exercises)
     : [];
   const totalSets = workoutDay
     ? getTotalPlannedSetsForWorkout(workoutDay, plan.exercises)
     : 0;
-  const selectedIsToday = selectedDay === today;
+  const selectedIsToday = activeSelectedDay === today;
   const selectedIsRestDay = !workoutDay || isRestDay(workoutDay);
 
   return (
@@ -48,7 +80,7 @@ export function TodayWorkout({ dateLabel, today }: TodayWorkoutProps) {
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/68">
-              {selectedIsToday ? "Today" : selectedDay} · {dateLabel}
+              {selectedIsToday ? "Today" : activeSelectedDay} · {dateLabel}
             </p>
             <h2 className="mt-1 text-3xl font-semibold tracking-tight">
               {workoutDay?.title ?? "No plan"}
@@ -71,7 +103,7 @@ export function TodayWorkout({ dateLabel, today }: TodayWorkoutProps) {
 
       <DaySwitcher
         onSelectDay={setSelectedDay}
-        selectedDay={selectedDay}
+        selectedDay={activeSelectedDay}
         today={today}
       />
 
@@ -126,7 +158,7 @@ export function TodayWorkout({ dateLabel, today }: TodayWorkoutProps) {
               }
 
               const confirmed = window.confirm(
-                `Start ${selectedDay}'s workout instead of today's workout?`,
+                `Start ${activeSelectedDay}'s workout instead of today's workout?`,
               );
 
               if (!confirmed) {

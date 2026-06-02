@@ -30,7 +30,7 @@ export function SetLogRow({
   return (
     <div
       className={[
-        "grid grid-cols-[2.5rem_1fr_1fr_3rem] items-center gap-2 rounded-2xl border px-3 py-3",
+        "grid grid-cols-[2.5rem_1fr_1fr_3rem] items-start gap-2 rounded-2xl border px-3 py-3",
         set.completed
           ? "border-accent bg-accent-soft"
           : "border-border-soft bg-surface",
@@ -77,19 +77,21 @@ export function SetLogRow({
           value={set.reps || ""}
         />
       </label>
-      <button
-        aria-label={`Mark set ${set.setNumber} complete`}
-        className={[
-          "flex size-11 items-center justify-center rounded-xl border text-sm font-semibold",
-          set.completed
-            ? "border-accent bg-accent text-white"
-            : "border-border-soft bg-white text-muted",
-        ].join(" ")}
-        onClick={() => onChange({ ...set, completed: !set.completed })}
-        type="button"
-      >
-        ✓
-      </button>
+      <div className="pt-[1.35rem]">
+        <button
+          aria-label={`Mark set ${set.setNumber} complete`}
+          className={[
+            "flex size-11 items-center justify-center rounded-xl border text-sm font-semibold",
+            set.completed
+              ? "border-accent bg-accent text-white"
+              : "border-border-soft bg-white text-muted",
+          ].join(" ")}
+          onClick={() => onChange({ ...set, completed: !set.completed })}
+          type="button"
+        >
+          ✓
+        </button>
+      </div>
     </div>
   );
 }

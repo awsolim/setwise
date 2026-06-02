@@ -1,6 +1,6 @@
 "use client";
 
-import type { Exercise } from "@/lib/types";
+import type { Exercise, ExerciseBackupOption } from "@/lib/types";
 
 type ExerciseEditorCardProps = {
   exercise: Exercise;
@@ -17,6 +17,16 @@ function toPositiveInteger(value: string, fallback: number): number {
   return Number.isFinite(parsedValue) ? Math.max(1, parsedValue) : fallback;
 }
 
+function createBackupOption() {
+  return {
+    id:
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `backup-${Date.now()}`,
+    name: "Backup Exercise",
+  };
+}
+
 export function ExerciseEditorCard({
   exercise,
   onChange,
@@ -26,6 +36,31 @@ export function ExerciseEditorCard({
   canMoveDown,
   canMoveUp,
 }: ExerciseEditorCardProps) {
+  const backupOptions = exercise.backupOptions ?? [];
+
+  function updateBackupOption(
+    backupOptionId: string,
+    updates: Partial<ExerciseBackupOption>,
+  ) {
+    onChange({
+      ...exercise,
+      backupOptions: backupOptions.map((backupOption) =>
+        backupOption.id === backupOptionId
+          ? { ...backupOption, ...updates }
+          : backupOption,
+      ),
+    });
+  }
+
+  function removeBackupOption(backupOptionId: string) {
+    onChange({
+      ...exercise,
+      backupOptions: backupOptions.filter(
+        (backupOption) => backupOption.id !== backupOptionId,
+      ),
+    });
+  }
+
   return (
     <div className="rounded-3xl border border-border-soft bg-white/60 p-4">
       <div className="flex items-center justify-between gap-3">
@@ -153,6 +188,72 @@ export function ExerciseEditorCard({
             value={exercise.notes ?? ""}
           />
         </label>
+
+        <section className="rounded-2xl border border-border-soft bg-surface-muted/35 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <h4 className="text-sm font-semibold text-foreground">Backups</h4>
+            <button
+              className="min-h-9 rounded-full bg-surface px-3 text-sm font-semibold text-foreground"
+              onClick={() =>
+                onChange({
+                  ...exercise,
+                  backupOptions: [...backupOptions, createBackupOption()],
+                })
+              }
+              type="button"
+            >
+              Add
+            </button>
+          </div>
+
+          {backupOptions.length > 0 ? (
+            <div className="mt-3 space-y-2">
+              {backupOptions.map((backupOption) => (
+                <div
+                  className="rounded-2xl border border-border-soft bg-surface px-3 py-3"
+                  key={backupOption.id}
+                >
+                  <div className="flex items-start gap-2">
+                    <label className="min-w-0 flex-1">
+                      <span className="sr-only">Backup exercise name</span>
+                      <input
+                        className="min-h-11 w-full rounded-xl border border-border-soft bg-white px-3 text-sm font-semibold text-foreground outline-none focus:border-accent"
+                        onChange={(event) =>
+                          updateBackupOption(backupOption.id, {
+                            name: event.target.value,
+                          })
+                        }
+                        value={backupOption.name}
+                      />
+                    </label>
+                    <button
+                      className="flex size-11 shrink-0 items-center justify-center rounded-full text-red-700"
+                      onClick={() => removeBackupOption(backupOption.id)}
+                      type="button"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <label className="mt-2 flex min-h-10 items-center justify-between gap-3 rounded-xl bg-surface-muted px-3">
+                    <span className="text-xs font-medium text-muted">
+                      Each side
+                    </span>
+                    <input
+                      checked={Boolean(backupOption.isUnilateral)}
+                      className="size-4 accent-[#173b32]"
+                      onChange={(event) =>
+                        updateBackupOption(backupOption.id, {
+                          isUnilateral: event.target.checked,
+                        })
+                      }
+                      type="checkbox"
+                    />
+                  </label>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </section>
       </div>
 
       <div className="mt-4 flex gap-2">

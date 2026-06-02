@@ -145,6 +145,10 @@ function normalizeWorkoutSession(value: unknown): WorkoutSession | null {
       {
         exerciseId: log.exerciseId,
         notes: typeof log.notes === "string" ? log.notes : undefined,
+        performedExerciseName:
+          typeof log.performedExerciseName === "string"
+            ? log.performedExerciseName
+            : undefined,
         sets,
       },
     ];
@@ -193,8 +197,39 @@ function normalizeExercise(value: unknown): Exercise | null {
   }
 
   const normalizedRepMin = Math.max(1, Math.round(repMin));
+  const backupOptions = Array.isArray(exercise.backupOptions)
+    ? exercise.backupOptions.flatMap((backupOption) => {
+        if (
+          !backupOption ||
+          typeof backupOption !== "object" ||
+          typeof backupOption.name !== "string"
+        ) {
+          return [];
+        }
+
+        return [
+          {
+            id:
+              typeof backupOption.id === "string"
+                ? backupOption.id
+                : `backup-${Date.now()}`,
+            isUnilateral: Boolean(backupOption.isUnilateral),
+            muscleGroup:
+              typeof backupOption.muscleGroup === "string"
+                ? backupOption.muscleGroup
+                : "",
+            name: backupOption.name.trim() || "Backup Exercise",
+            notes:
+              typeof backupOption.notes === "string"
+                ? backupOption.notes
+                : "",
+          },
+        ];
+      })
+    : [];
 
   return {
+    backupOptions,
     id: exercise.id,
     isUnilateral: Boolean(exercise.isUnilateral),
     muscleGroup:

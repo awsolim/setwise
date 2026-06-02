@@ -168,6 +168,7 @@ export function createInitialExerciseLogsForWorkout(
     return {
       exerciseId: exercise.id,
       notes: "",
+      performedExerciseName: undefined,
       sets: Array.from({ length: exercise.sets }, (_, index) => ({
         completed: false,
         reps: 0,

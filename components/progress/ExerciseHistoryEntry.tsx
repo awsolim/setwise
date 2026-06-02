@@ -29,6 +29,11 @@ export function ExerciseHistoryEntry({
           {workoutDay ? (
             <p className="mt-1 text-sm text-muted">{workoutDay.title}</p>
           ) : null}
+          {entry.log.performedExerciseName ? (
+            <p className="mt-1 text-sm font-medium text-accent">
+              Used {entry.log.performedExerciseName}
+            </p>
+          ) : null}
         </div>
         <Link
           className="rounded-full bg-surface-muted px-3 py-1 text-xs font-semibold text-foreground"
