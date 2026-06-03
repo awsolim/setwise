@@ -35,7 +35,7 @@ export function DaySwitcher({
             className={[
               "relative min-h-12 rounded-2xl border text-sm font-semibold transition",
               isSelected
-                ? "border-[#173b32] bg-[#173b32] text-white"
+                ? "border-[#0f1b2d] bg-[#0f1b2d] text-white"
                 : isToday
                   ? "border-accent bg-accent-soft text-accent"
                   : "border-transparent bg-surface-muted/60 text-muted",

@@ -19,7 +19,7 @@ export function FinishWorkoutBar({
         </p>
       ) : null}
       <button
-        className="dark-action min-h-14 w-full rounded-2xl bg-[#173b32] px-5 text-base font-semibold disabled:bg-surface-muted disabled:!text-muted"
+        className="dark-action min-h-14 w-full rounded-2xl bg-[#0f1b2d] px-5 text-base font-semibold disabled:bg-surface-muted disabled:!text-muted"
         disabled={!canFinish}
         onClick={onFinish}
         style={canFinish ? { color: "#ffffff" } : undefined}

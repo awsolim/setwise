@@ -137,7 +137,7 @@ export function WorkoutLogger({ dayId }: WorkoutLoggerProps) {
 
   return (
     <div className="space-y-4 pb-10">
-      <section className="-mx-5 bg-[#173b32] px-5 pb-4 pt-4 text-white">
+      <section className="-mx-5 bg-[#0f1b2d] px-5 pb-4 pt-4 text-white">
         <Link
           className="inline-flex min-h-9 items-center text-sm font-semibold text-white/72"
           href="/today"

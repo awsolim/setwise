@@ -146,7 +146,7 @@ export function SessionEditor({ sessionId }: SessionEditorProps) {
         &lt; Progress
       </Link>
 
-      <section className="rounded-[1.35rem] bg-[#173b32] px-5 py-5 text-white">
+      <section className="rounded-[1.35rem] bg-[#0f1b2d] px-5 py-5 text-white">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/68">
           {formatSessionDate(session.date)}
         </p>
@@ -231,7 +231,7 @@ export function SessionEditor({ sessionId }: SessionEditorProps) {
           </p>
         ) : null}
         <button
-          className="dark-action min-h-14 w-full rounded-2xl bg-[#173b32] px-5 text-base font-semibold"
+          className="dark-action min-h-14 w-full rounded-2xl bg-[#0f1b2d] px-5 text-base font-semibold"
           onClick={saveChanges}
           style={{ color: "#ffffff" }}
           type="button"

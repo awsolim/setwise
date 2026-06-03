@@ -76,7 +76,7 @@ export function TodayWorkout() {
 
   return (
     <div className="space-y-4">
-      <section className="-mx-5 bg-[#173b32] px-5 pb-4 pt-4 text-white shadow-[0_12px_28px_rgba(23,59,50,0.2)]">
+      <section className="-mx-5 bg-[#0f1b2d] px-5 pb-4 pt-4 text-white shadow-[0_12px_28px_rgba(15,27,45,0.2)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/68">
@@ -150,7 +150,7 @@ export function TodayWorkout() {
       <div className="space-y-3">
         {workoutDay && !selectedIsRestDay ? (
           <Link
-            className="dark-action flex min-h-14 w-full items-center justify-center rounded-2xl bg-gradient-to-b from-[#4f8b72] via-[#2f6a55] to-[#173b32] px-5 text-base font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_14px_28px_rgba(23,59,50,0.24)] transition active:scale-[0.99]"
+            className="dark-action flex min-h-14 w-full items-center justify-center rounded-2xl bg-gradient-to-b from-[#293b58] via-[#192840] to-[#0f1b2d] px-5 text-base font-bold shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_14px_28px_rgba(15,27,45,0.24)] transition active:scale-[0.99]"
             href={`/workout/${workoutDay.id}`}
             onClick={(event) => {
               if (selectedIsToday) {

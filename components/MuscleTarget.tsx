@@ -42,7 +42,7 @@ export function MuscleTarget({ targets }: MuscleTargetProps) {
   return (
     <div className="shrink-0">
       <div
-        className="h-36 w-24 overflow-hidden rounded-2xl bg-[#f7f2ea] [&_.body-chart-container]:p-1.5 [&_.body-chart-svg]:drop-shadow-none"
+        className="h-36 w-24 overflow-hidden rounded-2xl bg-[#f4f7fb] [&_.body-chart-container]:p-1.5 [&_.body-chart-svg]:drop-shadow-none"
         ref={containerRef}
       />
       <p className="mt-1 text-center text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-muted">

@@ -5,7 +5,7 @@ const description =
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    background_color: "#eeebe3",
+    background_color: "#0f1b2d",
     description,
     display: "standalone",
     icons: [
@@ -21,6 +21,12 @@ export default function manifest(): MetadataRoute.Manifest {
       },
       {
         purpose: "maskable",
+        sizes: "192x192",
+        src: "/icons/maskable-192.png",
+        type: "image/png",
+      },
+      {
+        purpose: "maskable",
         sizes: "512x512",
         src: "/icons/maskable-512.png",
         type: "image/png",
@@ -31,6 +37,6 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     short_name: "Setwise",
     start_url: "/today",
-    theme_color: "#173b32",
+    theme_color: "#0f1b2d",
   };
 }

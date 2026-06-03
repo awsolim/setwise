@@ -170,7 +170,7 @@ export function ExerciseEditorCard({
           </span>
           <input
             checked={Boolean(exercise.isUnilateral)}
-            className="size-5 accent-[#173b32]"
+            className="size-5 accent-[#0f1b2d]"
             onChange={(event) =>
               onChange({ ...exercise, isUnilateral: event.target.checked })
             }
@@ -240,7 +240,7 @@ export function ExerciseEditorCard({
                     </span>
                     <input
                       checked={Boolean(backupOption.isUnilateral)}
-                      className="size-4 accent-[#173b32]"
+                      className="size-4 accent-[#0f1b2d]"
                       onChange={(event) =>
                         updateBackupOption(backupOption.id, {
                           isUnilateral: event.target.checked,

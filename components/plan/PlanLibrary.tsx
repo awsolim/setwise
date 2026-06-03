@@ -71,7 +71,7 @@ function SavedPlanCard({
 
       <div className="mt-3 flex justify-end">
         <button
-          className="min-h-10 rounded-2xl bg-white px-4 text-sm font-semibold text-[#173b32] disabled:bg-white/12 disabled:text-white/45"
+          className="min-h-10 rounded-2xl bg-white px-4 text-sm font-semibold text-[#0f1b2d] disabled:bg-white/12 disabled:text-white/45"
           disabled={isActive}
           onClick={() => onActivate(savedPlan)}
           type="button"
@@ -109,7 +109,7 @@ export function PlanLibrary() {
   }
 
   return (
-    <section className="overflow-hidden rounded-[1.35rem] border border-[#173b32] bg-[#173b32] text-white shadow-[0_14px_34px_rgba(23,59,50,0.18)]">
+    <section className="overflow-hidden rounded-[1.35rem] border border-[#0f1b2d] bg-[#0f1b2d] text-white shadow-[0_14px_34px_rgba(15,27,45,0.18)]">
       <div className="flex items-center gap-2 px-4 py-3">
         <button
           aria-expanded={isOpen}

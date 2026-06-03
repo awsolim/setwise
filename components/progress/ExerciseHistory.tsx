@@ -64,7 +64,7 @@ export function ExerciseHistory({ exerciseId }: ExerciseHistoryProps) {
         &lt; Progress
       </Link>
 
-      <section className="rounded-[1.35rem] bg-[#173b32] px-5 py-5 text-white">
+      <section className="rounded-[1.35rem] bg-[#0f1b2d] px-5 py-5 text-white">
         {exercise.muscleGroup ? (
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/68">
             {exercise.muscleGroup}

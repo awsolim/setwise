@@ -62,7 +62,7 @@ export function ProgressExerciseList() {
           description="Log a workout from Today and your exercise history will appear here."
         />
         <Link
-          className="dark-action mt-4 flex min-h-12 items-center justify-center rounded-2xl bg-[#173b32] px-4 text-sm font-semibold"
+          className="dark-action mt-4 flex min-h-12 items-center justify-center rounded-2xl bg-[#0f1b2d] px-4 text-sm font-semibold"
           href="/today"
           style={{ color: "#ffffff" }}
         >
